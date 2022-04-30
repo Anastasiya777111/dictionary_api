@@ -1,46 +1,58 @@
-import { useState } from "react";
+/* eslint-disable react/jsx-key */
+import { useEffect, useState } from "react";
 import axios from "axios";
 import React from "react";
 import "./App.css";
 
 export default function App() {
   const [userInput, setUserInput] = useState("");
-  const [word, setWord] = useState("");
-  const [phonetic, setPhonetic] = useState("");
-  const [phoneticAudio, setPhoneticAudio] = useState("");
-  const [origin, setOrigin] = useState("");
-  const [partOfSpeech, setPartOfSpeech] = useState("");
-  const [definition, setDefinition] = useState("");
-  const [example, setExample] = useState("");
-  const [synonyms, setSynonyms] = useState("");
-  const [antonyms, setAntonyms] = useState("");
-  const [sourceUrl, setSourceUrl] = useState("");
+  let href: string = window.location.href.split("/")[3];
+  const [wordTranslate, setWordTranslate] = useState<Array<any>>([]);
+  const [searchTag, setsearchTag] = useState("");
 
   const getVal = (val: { target: { value: string } }) => {
     setUserInput(val.target.value);
   };
 
   const getDefinition = () => {
+    let input = userInput;
+    if (href && userInput == "") {
+      input = href;
+    }
+    setWordTranslate([<h1>Loading...</h1>]);
     axios
-      .get(`https://api.dictionaryapi.dev/api/v2/entries/en/${userInput}`)
+      .get(`https://api.dictionaryapi.dev/api/v2/entries/en/${input}`)
       .then((res) => {
-        setWord(res.data[0].word);
-        setPhonetic(res.data[0].phonetic);
-        setPhoneticAudio(res.data[0].phonetics[0].audio);
-        setOrigin(res.data[0].origin);
-        setPartOfSpeech(res.data[0].meanings[0].partOfSpeech);
-        setDefinition(res.data[0].meanings[0].definitions[0].definition);
-        setExample(res.data[0].meanings[0].definitions[0].example);
-        setSynonyms(res.data[0].meanings[0].definitions[0].synonyms);
-        setAntonyms(res.data[0].meanings[0].definitions[0].antonyms);
-        setSourceUrl(res.data[0].phonetics[0].sourceUrl);
+        let arr = [
+          <p>{res.data[0].word}</p>,
+          <p>{res.data[0].phonetic}</p>,
+          <audio src={res.data[0].phonetics[0].audio} controls></audio>,
+          <p>{res.data[0].origin}</p>,
+          <p>{res.data[0].meanings[0].partOfSpeech}</p>,
+          <p>{res.data[0].meanings[0].definitions[0].definition}</p>,
+          <p>{res.data[0].meanings[0].definitions[0].example}</p>,
+          <p>{res.data[0].meanings[0].definitions[0].synonyms}</p>,
+          <p>{res.data[0].meanings[0].definitions[0].antonyms}</p>,
+          <a href={res.data[0].phonetics[0].sourceUrl}>
+            commons.wikimedia.org
+          </a>,
+        ];
+        setWordTranslate(
+          arr.map((e) => {
+            return e;
+          })
+        );
       })
-      .catch(() => {
-        alert("Error! Word not found.");
+      .catch((err) => {
+        setWordTranslate([<p>Error! Word not found.</p>]);
       });
   };
+  if (href && userInput == "") {
+    setUserInput(window.location.href.split("/")[3]);
+    getDefinition();
+  }
 
-  const handleKeypress = (e: { charCode: number }) => {
+  const handleKeypress = (e: { charCode: any }) => {
     if (e.charCode === 13) {
       getDefinition();
     }
@@ -61,18 +73,7 @@ export default function App() {
             Define
           </button>
         </div>
-        <div>
-          <h1>{word}</h1>
-          <p>{phonetic}</p>
-          <audio src={phoneticAudio} controls></audio>
-          <p>{origin}</p>
-          <p>{partOfSpeech}</p>
-          <p>{definition}</p>
-          <p>{example}</p>
-          <p>{synonyms}</p>
-          <p>{antonyms}</p>
-          <a href={sourceUrl}>commons.wikimedia.org</a>
-        </div>
+        <div>{wordTranslate}</div>
       </div>
     </div>
   );
